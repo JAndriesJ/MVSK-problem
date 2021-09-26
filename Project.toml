@@ -3,6 +3,12 @@ uuid = "fc38be9b-728f-40f7-a331-b7ed24e2bc9e"
 authors = ["Andries Steenkamp <j.andries.j.steenkamp@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
 [compat]
 julia = "1"
 
