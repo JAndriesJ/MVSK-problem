@@ -28,7 +28,7 @@ module constraints
     end
 
     """L(f(x)) = (-1)⁻¹*L(xᵀΦ⁽ᵏ⁾(x ⊗ ⋯ ⊗ x))"""
-    function make_objective_function(N,Lx,k)
+    function make_objective_function(N,k,Lx)
         dkm  = moments.make_mon_expo(N,k,isle=false)
         Lxk  = moments.get_Lxᵅ(Lx,dkm) 
         R    = load_relative_returns_data_matrix([1:N...])

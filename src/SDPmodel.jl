@@ -22,7 +22,7 @@ module SDPmodel
         loc_ideal_con = con.make_localizing_ideal_constraint(N,t,Lx)
         @constraint(model, loc_ideal_con .== zeros(size(loc_ideal_con)))
         ## Min f
-        f = con.make_objective_function(N,Lx,k)
+        f = con.make_objective_function(N,k,Lx)
         @objective(model, Min, f) #  Set objective
         return model 
     end
