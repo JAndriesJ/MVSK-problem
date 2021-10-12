@@ -1,5 +1,5 @@
 using MVSK
-using Test
+using Test, JuMP, DataFrames
 
 include("src\\stock_data.jl")
 include("src\\moments.jl")
@@ -77,12 +77,43 @@ end
 end
 
 ## constraints
+@testset "all the constraints" begin
+    model = JuMP.Model()
+    N,t = 5,3
+    @variable(model, Lx[moments.make_mon_expo(N,2*t)]) # Create variables
 
-make_PSD_constraint,
-make_localzing_constraints,
-make_localizing_ideal_constraint,
-make_objective_function
+    @test Lx[moments.make_mon_expo(N,0)[1,1]] == Lx[[0, 0, 0, 0, 0]]   ## L(1) 
+    PSD_moment_matrix     = constraints.make_PSD_constraint(N,t,Lx) ## L([x]≦ₜ[x]ᵀ≦ₜ)
+    @test size(PSD_moment_matrix) == (binomial(N+t,t),binomial(N+t,t))
+    @test PSD_moment_matrix[end,end] == Lx[moments.eᵢ(N,N)*2*t]
 
+    localzing_constraints = [con for con in constraints.make_localzing_constraints(N,t,Lx)] ## L(xᵢ[x]≦ₜ₋₁[x]ᵀ≦ₜ₋₁) ⪰ 0 ∀ i ∈ [N]
+    @test length(localzing_constraints) == N
+    @test size(localzing_constraints[1]) == (binomial(N+t-1,t-1),binomial(N+t-1,t-1))
+    @test localzing_constraints[2][end,end] == Lx[[0, 1, 0, 0, 4]]
+
+    loc_ideal_con         = constraints.make_localizing_ideal_constraint(N,t,Lx) ## L((1 - ∑ᴺᵢ₌₁xᵢ)[x]≦ₜ₋₁[x]ᵀ≦ₜ₋₁) ⪰ 0
+    @test size(loc_ideal_con) == (binomial(N+t-1,t-1),binomial(N+t-1,t-1))
+    @test loc_ideal_con[end,end] == Lx[[0, 0, 0, 0, 4]] - Lx[[1, 0, 0, 0, 4]] - Lx[[0, 1, 0, 0, 4]] - Lx[[0, 0, 1, 0, 4]] - Lx[[0, 0, 0, 1, 4]] - Lx[[0, 0, 0, 0, 5]]
+
+    φ⁽³⁾ = constraints.make_objective_function(N,3,Lx) ## wᵀΦ⁽³⁾(w⊗w)
+    φ⁽⁴⁾ = constraints.make_objective_function(N,4,Lx) ## wᵀΦ⁽⁴⁾(w⊗w⊗w)
+    @test φ⁽³⁾.terms.keys == moments.get_Lxᵅ(Lx,moments.make_mon_expo(N,3,isle=false) )
+    @test φ⁽⁴⁾.terms.keys == moments.get_Lxᵅ(Lx,moments.make_mon_expo(N,4,isle=false) )
+end
+
+## model
+@testset "SDPmodel" begin
+    N,t,k = 5,3,3
+    SDP_model = SDPmodel.get_SDP_model(N,t,k)
+end
+
+@testset "SDPoptimized" begin
+    SDP_model_opt = SDPoptimized.optimize_SDP(SDP_model)
+    @test string(primal_status(SDP_model_opt)) == "FEASIBLE_POINT"
+    @test string(dual_status(SDP_model_opt)) == "FEASIBLE_POINT"
+    @test objective_value(SDP_model_opt) == 7.076637829729638e-19
+end
 
 
 @testset "MVSK.jl" begin

@@ -5,28 +5,24 @@ module MVSK
 
 include("src\\stock_data.jl")
 include("src\\moments.jl")
-include("src\\constraints.jl")
+include("src\\SDPconstraints.jl")
 include("src\\SDPmodel.jl")
 include("src\\SDPoptimized.jl")
 using .stock_data
 using .moments 
-using .constraints 
+using .SDPconstraints 
 using .SDPmodel 
 using .SDPoptimized
 
 
+# N,t,k = 5,3,3
+# SDP_model = get_SDP_model(N,t,k)
 
+N_list,t_list,k = [5:10 ...], [2:3 ...], 3
+SDPoptimized.batch_optimize_SDP(N_list,t_list,k)
+N_list,t_list,k = [5:10 ...], [2:3...], 4
+SDPoptimized.batch_optimize_SDP(N_list,t_list,k)
 
-function batchrun()
-    t = 3 
-    for N in 10:25 
-        SDPmod = SDPmodel.get_SDP_model(N,t,4)
-        optSDPmod = SDPoptimized.optimize_SDP(SDPmod)
-        abc = open("C:\\Users\\jandr\\MahCodes\\MVSK\\assets\\Computation times.txt", "a") 
-            write(abc, "Computed kurtosis maximization bound: $(JuMP.objective_value(optSDPmod)) at level $(t) for $(N)-stockstook $(JuMP.solve_time(optSDPmod)) seconds"*"\n") 
-        close(abc)
-    end
-end
 
 using Test, DataFrames
 using JuMP

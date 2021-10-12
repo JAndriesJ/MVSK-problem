@@ -1,4 +1,4 @@
-module constraints
+module SDPconstraints
     include("stock_data.jl")
     include("moments.jl")
     using .moments ; const mom = moments
@@ -14,14 +14,15 @@ module constraints
         Mₜ = mom.make_mon_expo(N,(t,t))
         return mom.get_Lxᵅ(Lx, Mₜ)
     end
-    
+
     """L(xᵢ[x]≦ₜ₋₁[x]ᵀ≦ₜ₋₁) ⪰ 0"""
     function make_localzing_constraints(N,t,Lx)
         Mₜ₋₁ = mom.make_mon_expo(N,(t-1,t-1))
         return [mom.get_Lxᵅ(Lx, map(x -> x + mom.eᵢ(N,i), Mₜ₋₁)) for i ∈ 1:N]
     end
     
-    """L((1 - ∑ᴺᵢ₌₁xᵢ)[x]≦ₜ₋₁[x]ᵀ≦ₜ₋₁) ⪰ 0"""
+    """L((1 - ∑ᴺᵢ₌₁xᵢ)[x]≦ₜ₋₁[x]ᵀ≦ₜ₋₁) ⪰ 0""" 
+    ################# INCORRECT: Where is the -1?
     function make_localizing_ideal_constraint(N,t,Lx)
         Mₜ₋₁ = mom.make_mon_expo(N,(t-1,t-1))
         return sum( [mom.get_Lxᵅ(Lx, map(x -> x + mom.eᵢ(N,i), Mₜ₋₁))  for i ∈ 1:N] ) 
