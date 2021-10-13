@@ -1,4 +1,6 @@
 module SDPoptimized
+using Dates, MosekTools, JuMP
+
 include("src\\SDPmodel.jl")
 using .SDPmodel 
 
@@ -6,7 +8,6 @@ using .SDPmodel
 export optimize_SDP,
        batch_optimize_SDP
 
-using MosekTools, JuMP
 # Pkg.build("MosekTools")  # [[[In the powershell]]] # Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted 
 function optimize_SDP(model)
     JuMP.set_optimizer(model, Mosek.Optimizer)
@@ -19,8 +20,6 @@ function optimize_SDP(model)
     println("Objective: ", objective_value(model))
     return model
 end
-
-using Dates
 
 function batch_optimize_SDP(N_list,t_list,k)
     save_dir = "C:\\Users\\jandr\\MahCodes\\MVSK\\assets\\$(string(Dates.today()))-bounds_data.md"
