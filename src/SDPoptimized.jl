@@ -1,7 +1,6 @@
 module SDPoptimized
 using Dates, MosekTools, JuMP
-
-include("src\\SDPmodel.jl")
+include("SDPmodel.jl")
 using .SDPmodel 
 
 

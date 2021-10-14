@@ -1,27 +1,39 @@
 module MVSK
 
-# using Pkg
-# Pkg.status()
 
-include("src\\stock_data.jl")
-include("src\\moments.jl")
-include("src\\SDPconstraints.jl")
 include("src\\SDPmodel.jl")
 include("src\\SDPoptimized.jl")
-using .stock_data
-using .moments 
-using .SDPconstraints 
 using .SDPmodel 
 using .SDPoptimized
 
 
-# N,t,k = 5,3,3
-# SDP_model = get_SDP_model(N,t,k)
+## Running a single model:
+Number_of_stocks = 10
+Level_of_Hierarchy = 2 # must be higher than 1
+k = 3 # 3 for skewnes, 4 for kurtosis
+mod     = SDPmodel.get_SDP_model(Number_of_stocks,Level_of_Hierarchy,3)
+mod_opt = SDPoptimized.optimize_SDP(mod)
 
-N_list,t_list,k = [5:10 ...], [2:3 ...], 3
-SDPoptimized.batch_optimize_SDP(N_list,t_list,k)
-N_list,t_list,k = [5:10 ...], [2:3...], 4
-SDPoptimized.batch_optimize_SDP(N_list,t_list,k)
+
+Primal_status    = string(primal_status(mod_opt)) 
+Dual_status      = string(dual_status(mod_opt))
+objective_value  = JuMP.objective_value(mod_opt)
+computation_time = JuMP.solve_time(mod_opt)
+
+
+## Running the model for a batch of parameters:
+## Skewness
+Number_of_stocks_list = [5:15 ...]
+Level_of_Hierarchy_list = [2:3 ...] # must be higher than 1
+k = 3 # 3 for skewnes, 4 for kurtosis
+SDPoptimized.batch_optimize_SDP(Number_of_stocks_list,Level_of_Hierarchy_list,k)
+## Kurtosis
+Number_of_stocks_list = [5:15 ...]
+Level_of_Hierarchy_list = [2:3 ...] # must be higher than 1
+k = 4 # 3 for skewnes, 4 for kurtosis
+SDPoptimized.batch_optimize_SDP(Number_of_stocks_list,Level_of_Hierarchy_list,k)
+
+
 
 
 using Test, DataFrames

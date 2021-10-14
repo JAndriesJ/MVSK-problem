@@ -22,10 +22,9 @@ module SDPconstraints
     end
     
     """L((1 - ∑ᴺᵢ₌₁xᵢ)[x]≦ₜ₋₁[x]ᵀ≦ₜ₋₁) ⪰ 0""" 
-    ################# INCORRECT: Where is the -1?
     function make_localizing_ideal_constraint(N,t,Lx)
         Mₜ₋₁ = mom.make_mon_expo(N,(t-1,t-1))
-        return sum( [mom.get_Lxᵅ(Lx, map(x -> x + mom.eᵢ(N,i), Mₜ₋₁))  for i ∈ 1:N] ) 
+        return make_PSD_constraint(N,t-1,Lx) - sum( [mom.get_Lxᵅ(Lx, map(x -> x + mom.eᵢ(N,i), Mₜ₋₁))  for i ∈ 1:N] ) 
     end
 
     """L(f(x)) = (-1)⁻¹*L(xᵀΦ⁽ᵏ⁾(x ⊗ ⋯ ⊗ x))"""
