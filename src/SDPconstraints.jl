@@ -27,6 +27,12 @@ module SDPconstraints
         return make_PSD_constraint(N,t-1,Lx) - sum( [mom.get_Lxᵅ(Lx, map(x -> x + mom.eᵢ(N,i), Mₜ₋₁))  for i ∈ 1:N] ) 
     end
 
+
+    """L(xᵅ⁺ᵝ) = 0""" 
+    function make_zero_propagation_constraint(N,t,Lx)
+       
+    end
+
     """L(f(x)) = (-1)⁻¹*L(xᵀΦ⁽ᵏ⁾(x ⊗ ⋯ ⊗ x))"""
     function make_objective_function(N,k,Lx)
         dkm  = moments.make_mon_expo(N,k,isle=false)

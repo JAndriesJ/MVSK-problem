@@ -1,5 +1,7 @@
 module MVSK
 
+using Pkg
+Pkg.status()
 
 include("src\\SDPmodel.jl")
 include("src\\SDPoptimized.jl")
@@ -15,8 +17,9 @@ mod     = SDPmodel.get_SDP_model(Number_of_stocks,Level_of_Hierarchy,3)
 mod_opt = SDPoptimized.optimize_SDP(mod)
 
 
-Primal_status    = string(primal_status(mod_opt)) 
-Dual_status      = string(dual_status(mod_opt))
+using JuMP
+Primal_status    = string(JuMP.primal_status(mod_opt)) 
+Dual_status      = string(JuMP.dual_status(mod_opt))
 objective_value  = JuMP.objective_value(mod_opt)
 computation_time = JuMP.solve_time(mod_opt)
 
@@ -26,12 +29,12 @@ computation_time = JuMP.solve_time(mod_opt)
 Number_of_stocks_list = [5:15 ...]
 Level_of_Hierarchy_list = [2:3 ...] # must be higher than 1
 k = 3 # 3 for skewnes, 4 for kurtosis
-SDPoptimized.batch_optimize_SDP(Number_of_stocks_list,Level_of_Hierarchy_list,k)
+SDPoptimized.batch_optimize_SDP(Number_of_stocks_list, Level_of_Hierarchy_list, k)
 ## Kurtosis
 Number_of_stocks_list = [5:15 ...]
 Level_of_Hierarchy_list = [2:3 ...] # must be higher than 1
 k = 4 # 3 for skewnes, 4 for kurtosis
-SDPoptimized.batch_optimize_SDP(Number_of_stocks_list,Level_of_Hierarchy_list,k)
+SDPoptimized.batch_optimize_SDP(Number_of_stocks_list, Level_of_Hierarchy_list, k)
 
 
 

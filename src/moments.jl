@@ -22,6 +22,21 @@ function make_mon_expo(n::Int,t::Tuple{Int,Int}; isle::Bool = true)
     return [mi+mj for mi in mon_expo_vec1, mj in mon_expo_vec2]
 end
 
+## Cardinality restricted
+
+"""[̃x]≦ₜ or [̃x]₌ₜ"""
+function get_cardinality_restricted_mon_expo(n::Int,t::Int,ℓ::Int; isle::Bool = true)
+    mon_expo = make_mon_expo(n,t; isle)
+    return mon_expo[[sum(.!iszero.(expo)) < ℓ  for expo in mon_expo]]
+end
+
+""" [̃x]≦ₜ([̃x]≦ₜ)ᵀ or [̃x]₌ₜ([̃x]₌ₜ)ᵀ """
+function get_cardinality_restricted_mon_expo(n::Int,t::Tuple{Int,Int},ℓ::Int; isle::Bool = true)
+    mon_expo_vec1      = get_cardinality_restricted_monomials(n,t[1],ℓ; isle=isle)
+    mon_expo_vec2      = get_cardinality_restricted_monomials(n,t[2],ℓ; isle=isle)
+    return [mi+mj for mi in mon_expo_vec1, mj in mon_expo_vec2]
+end
+
 """ (Lx,α) -> var[x^α] """
 get_Lxᵅ(Lx,α) = isempty(α) ?  0.0 : map(y -> Lx[y],α)
 
