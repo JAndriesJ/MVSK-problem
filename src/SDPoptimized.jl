@@ -31,7 +31,7 @@ function batch_optimize_SDP(N_list,t_list,k)
     for t in t_list
         for N in N_list 
             # try 
-            SDPmod = SDPmodel.get_SDP_model(N,t,4)
+            SDPmod = SDPmodel.get_SDP_model(N,t,k)
             optSDPmod = SDPoptimized.optimize_SDP(SDPmod)
             P_stat = string(primal_status(optSDPmod)) 
             D_stat = string(dual_status(optSDPmod))

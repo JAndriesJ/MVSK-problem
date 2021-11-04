@@ -10,7 +10,7 @@ using .SDPoptimized
 
 
 ## Running a single model:
-Number_of_stocks = 10
+Number_of_stocks = 5
 Level_of_Hierarchy = 2 # must be higher than 1
 k = 3 # 3 for skewnes, 4 for kurtosis
 mod     = SDPmodel.get_SDP_model(Number_of_stocks,Level_of_Hierarchy,3)
