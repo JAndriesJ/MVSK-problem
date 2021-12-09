@@ -10,12 +10,26 @@ using .SDPoptimized
 
 
 ## Running a single model:
-Number_of_stocks = 5
-Level_of_Hierarchy = 2 # must be higher than 1
-k = 3 # 3 for skewnes, 4 for kurtosis
-mod     = SDPmodel.get_SDP_model(Number_of_stocks,Level_of_Hierarchy,3)
+N = Number_of_stocks = 5
+t = Level_of_Hierarchy = 2 # must be higher than 1
+k = 4 # 3 for skewnes, 4 for kurtosis
+mod     = SDPmodel.get_SDP_model(Number_of_stocks,Level_of_Hierarchy,k)
 mod_opt = SDPoptimized.optimize_SDP(mod)
 
+include("src\\stock_data.jl")
+include("src\\moments.jl")
+include("src\\SDPconstraints.jl")
+using .moments 
+using .SDPconstraints 
+using .stock_data
+
+model = Model()
+@variable(model, Lx[moments.make_mon_expo(N,2*t)]) # Create variables
+f = SDPconstraints.make_objective_function(N,k,Lx)
+
+dkm  = moments.make_mon_expo(N,k,isle=false)
+Lxk  = moments.get_Lxᵅ(Lx,dkm)
+R    = stock_data.load_relative_returns_data_matrix([1:N...])
 
 using JuMP
 Primal_status    = string(JuMP.primal_status(mod_opt)) 
