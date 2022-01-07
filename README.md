@@ -2,50 +2,86 @@
 ![[MVSK.png]]
 
 ## Introduction 
-This repository provides polynomial optimization tools for the solving of the MVSK problem from portfolio optimization.
-It follows the general paradigm of moment based hierarchies of approximations for polynomial optimization problems.
-This code was written as part of my [POEMA](http://poema-network.eu/) secondment at [NAG](https://www.nag.com/)
+MVSK.jl is used to compute feasible solution and bounds to the MVSK-problem.
+This is done by using techniques from polynomial optimization and non-linear optimization.
+
+**The MVSK-problem:**
+$$
+\begin{equation}  \tag{0}
+\begin{split} 
+
+\max & ~~ f_1(w) := w^T\Phi^{(1)} \\
+\min & ~~ f_2(w) := w^T\Phi^{(2)}w \\
+\max & ~~ f_3(w) := w^T\Phi^{(3)}(w\otimes w) \\
+\min & ~~ f_4(w) := w^T\Phi^{(4)}(w\otimes w \otimes w) \\
+s.t. &~~  w \in \Delta^N \\
+ \end{split}
+ \end{equation}
+$$
+where $\Delta^N$ is the standard simplex of size $N$ and $\Phi^{(1)},\Phi^{(2)},\Phi^{(3)},\Phi^{(4)}$ are data matrices of appropriate dimensions.
+
 For details of the mathematics see [arXiv paper](url)
 
+---
 ## How to install
-The code should be stand alone:
-git clone ....
-Pkg.instantiate()
-ready to roll
+- Download
+- Install
+- Instantiate
+- Test installation
+
+---
+## How to use
+#### Example 1: using the preloaded data
+```
+
+```
 
 
-## Background:
-The sole purpose of this code is the computation of the the following polynomial optimization problem (POP)
-$$\begin{equation} \tag{3}
-\begin{split} 
-\psi^{(3)}_{\pm}= \max \textbackslash \min & ~~ w^T\Phi^{(3)}(w\otimes w) \\
-s.t. &~~  w \in \Delta^N \\
-\end{split}
- \end{equation}$$
+#### Example 2:
+#### Example 3:
 
-$$\begin{equation} \tag{4}
-\begin{split} 
-\psi^{(4)}_{\pm}= \max \textbackslash \min & ~~ w^T\Phi^{(4)}(w\otimes w \otimes w) \\
-s.t. &~~  w \in \Delta^N \\
-\end{split}
- \end{equation}$$
-Since POPs are NP hard to solve in general, even on the simplex, we resort to approximations. We use the moment based hierarchy of approximations:
+---
+## Overview of modules:
+
 $$
-\begin{equation} \tag{mom3}
-\begin{split} 
-\min & ~~  L(f) \\
-s.t. &~~ L(1) = 1\\
-&~~ M(g_0L) := L([\bw][\bw]^T) \succeq 0 \\
-&~~ M(g_iL) := L(x_i [\bw][\bw]^T) \succeq 0 ~\forall~i \in [N]\\
-&~~ M(hL):= L( (1 - \sum_{i\in [N]} x_i) [\bw][\bw]^T) = 0\\
-\end{split}
-\end{equation}
+\underbrace{\wh{\scr f}_{\SAGE}}_{\text{SAGE bound}} ~~~~\leq~~~~ \underbrace{\wh{\scr f}_{\min}(\omega)}_{\text{NONLIN bound}}
+~~~~\leq~~~~ \underbrace{{\scr f}_{\min}(\omega)}_{\text{model}}
+~~~~\leq~~~~ \underbrace{\wtl{\scr f}_{\min}(\omega)}_{\text{POP bound}}
+~~~~\leq~~~~ \underbrace{\wtl{\scr f}(\omega^{(r)})}_{\text{NONLIN bound}}
 $$
-Where the following are user set parameters:
-- $f(\bw) =  w^T\Phi^{(k)}(w\otimes ... \otimes w)$
-    - $\Phi^{(k)}$ is the $k^{th}$ moment matrix.
-- $N$ is the number of stocks.
-- $t$ is the level of the hierarchy.
+
+
+``` mermaid
+flowchart TB  
+ subgraph MODEL
+	 DATA
+	 UTIL
+ end
+
+ subgraph POP
+	 1
+ end
+
+ subgraph NONLIN	
+	 2
+ end
+ 
+ subgraph SAGE
+	 3
+ end
+```
+
+
+---
+## To Do list
+
+
+
+
+
+
+
+
 
 ## Getting started
 ```Julia
@@ -95,6 +131,8 @@ $\vdots$
 
 
 ### Acknowledgments
+This code was written as part of my [POEMA](http://poema-network.eu/) secondment at [NAG](https://www.nag.com/)
+
 This project was funded in part by the Europeans Union's EU Framework Programme for Research and Innovation Horizon 2020 under Marie Skodowska-Curie Actions grant agreement 813211 (POEMA).
 
 I would like to thank:
