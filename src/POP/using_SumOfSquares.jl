@@ -11,7 +11,7 @@ export get_SOS_bound,
        run_tests  
 
 """
-max  γ  (depending on Ψ)
+max  γ 
 s.t. xᵀ Ψ (x ⊗ x) or (x ⊗ x)ᵀ Ψ (x ⊗ x) - γ ∈ SOS
 x ∈ Δⁿ
 """
@@ -50,7 +50,8 @@ function get_SOS_bound(matrix,k)  #
     @constraint(model, c, f >= α, domain = S, maxdegree = k)
     optimize!(model)
     @show termination_status(model)
-    return objective_value(model)
+    return objective_value(model), primal_status(model), dual_status(model), solve_time(model)
+
 end
 
 function run_tests()
