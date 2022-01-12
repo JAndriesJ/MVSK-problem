@@ -1,102 +1,115 @@
 ## Initialize 
 using Pkg
 Pkg.status()
-
-
 Pkg.activate(dirname(@__DIR__))
 
-####################################################################
+############################ MODEL ########################################
 include("MODEL\\Model.jl")   ; using .Model 
 mod = build_model(6)
 
-mod.n_stocks
-mod.Data_matrix
-mod.moment_matrices
-mod.f₁ₘₐₓ
-mod.f₂ₘᵢₙ
+# mod.n_stocks
+# mod.Data_matrix
+# mod.moment_matrices
+# mod.f₁ₘₐₓ
+# mod.f₂ₘᵢₙ 
 
-####################################################################
-
-include("POP\\POP.jl")   ; using .POP
-
-sk_mat = mod.moment_matrices["skewness_matrix"]
+############################## POP ######################################
+me_vec  = mod.moment_matrices["means_vector"]
+cov_mat = mod.moment_matrices["covariance_matrix"]
+sk_mat  = mod.moment_matrices["skewness_matrix"]
 kur_mat = mod.moment_matrices["kurtosis_matrix"]
 
-sk_df = POP.get_POP_estimates(sk_mat,3:8)
-kur_df = POP.get_POP_estimates(kur_mat,4:8)
+
+include("POP\\SOS.jl") ; using .SOS
+deg_range = 4:2:8
+# https://jump.dev/SumOfSquares.jl/stable/generated/Polynomial%20Optimization/polynomial_optimization/#The-maxdegree-keyword-argument
+
+f₃ₘₐₓ_pop_df = SOS.get_SOS_skewness_estimates(sk_mat, deg_range)
+f₄ₘᵢₙ_pop_df = SOS.get_SOS_kurtosis_estimates(kur_mat, deg_range) 
+
+include("MODEL\\convex_quadratic_optimization.jl")  ; using .convex_quadratic_optimization
+f₄ₘᵢₙ_cqr = convex_quadratic_optimization.get_relaxed_kurtosis(kur_mat)
+
+################################ OBJ FUNCT ####################################
+include("UTIL\\objective_functions.jl"); using .objective_functions
+f₁, f₂, f₃, f₄ = objective_functions.get_f_vec(mod.moment_matrices)
+𝒻 = objective_functions.get_𝒻(ones(4), 
+                              (mod.f₁ₘₐₓ, mod.f₂ₘᵢₙ, f₃ₘₐₓ_pop_df[end,2], abs(f₄ₘᵢₙ_pop_df[end,2])), # fₒₚₜ 
+                              mod.moment_matrices)
+                           
+################################ NON LIN ####################################
+grid_range = 2 .^ (1:6)
+include("NONLIN\\grid_search.jl")  ; using .grid_search 
+gs_upper_bounds = grid_search.batch_min(𝒻, mod.n_stocks, grid_range)
+
+f₃ₘₐₓ_nl_df = grid_search.batch_max(f₃, mod.n_stocks, grid_range)
+f₄ₘᵢₙ_nl_df = grid_search.batch_min(f₄, mod.n_stocks, grid_range)
+
+################################ SAGE ####################################
+# Store data and switch to python:
+using CSV, DataFrames, Dates
+
+function save_data(mod, f₃ₘₐₓ_nl_df, f₄ₘᵢₙ_nl_df, f₃ₘₐₓ_pop_df, f₄ₘᵢₙ_pop_df, gs_upper_bounds; delim=',')
+    save_dir = "assets\\"*replace(string(now()), ":" => "-")
+    mkdir(save_dir)
+    # save moment matrices
+    for mom_mat ∈ ["means_vector", "kurtosis_matrix", "covariance_matrix", "skewness_matrix"]
+        CSV.write(save_dir*"\\"*mom_mat*".csv", DataFrame(mod.moment_matrices[mom_mat]),
+                                            header = false,
+                                            delim=delim)
+    end
+
+    CSV.write(save_dir*"\\f₃ₘₐₓ_nl_df.csv", f₃ₘₐₓ_nl_df, header = true, delim=delim)
+    CSV.write(save_dir*"\\f₄ₘᵢₙ_nl_df.csv", f₄ₘᵢₙ_nl_df, header = true, delim=delim)
+
+    CSV.write(save_dir*"\\f₃ₘₐₓ_pop_df.csv", f₃ₘₐₓ_pop_df, header = true, delim=delim)
+    CSV.write(save_dir*"\\f₄ₘᵢₙ_pop_df.csv", f₄ₘᵢₙ_pop_df, header = true, delim=delim)
+
+    CSV.write(save_dir*"\\gs_upper_bounds.csv", gs_upper_bounds, header = true, delim=delim)
+    return save_dir
+end
+
+save_dir =save_data(mod,
+                    f₃ₘₐₓ_nl_df,
+                    f₄ₘᵢₙ_nl_df,
+                    f₃ₘₐₓ_pop_df,
+                    f₄ₘᵢₙ_pop_df,
+                    gs_upper_bounds,
+                    delim='|')
 
 
+nar = DataFrame(Dict( "f₁ₘₐₓ" => mod.f₁ₘₐₓ,  
+                      "f₂ₘᵢₙ" => mod.f₂ₘᵢₙ,
+                      "f₄ₘᵢₙ_cqr" => f₄ₘᵢₙ_cqr
+                    ))
 
 
-
-
-df
-
-# obj_val, p_stat, d_stat, sol_t =
+CSV.write(save_dir*"\\parameters.csv", nar, header = true, delim="|")
 
 
 ####################################################################
 
-include("grid_search.jl")  ; using .grid_search 
+##### Code Health check
 
-
-
-
-
-## Code Health check
-
-objective_functions.run_tests()
-grid_search.run_tests()
-using_SumOfSquares.run_tests()
+# objective_functions.run_tests()
+# grid_search.run_tests()
+# using_SumOfSquares.run_tests()
   
 
-## Estimating f₃ₘₐₓ and f₄ₘᵢₙ 
-f₃  = get_f₃(skewness_matrix)
-f₄  = get_f₄(kurtosis_matrix)
-### Towards lower bounds of 
-
-# via Grid search
-r = 4
-hat_f₃ₘₐₓ = grid_search.max(f₃,n,r)
-hat_f₄ₘᵢₙ = grid_search.min(f₄,n,r)
-# via interior point line search filter method
 
 # via multi multi-start (TODO)
 
 # via particle swarm (TODO)
 
+
 ## Towards upper bounds of 
-# via SumsOfSquares.jl
-tilde_f₃ₘₐₓ = -using_SumOfSquares.get_SOS_bound((-1)*skewness_matrix,3)
-tilde_f₄ₘᵢₙ = maximum([using_SumOfSquares.get_SOS_bound(kurtosiss_matrix,6),1e-16]) # WARNING: somewhat arbitary value
+
+
+
 # via (my coded) Lasser Hierarchy (there are some complications)
 # include("POP\\Lasserre_hier\\Lasserre_bound.jl")
 # using .Lasserre_bound 
+
 # Lasserre_bound.get_Lasserre_bound(-skewness_matrix,3)
 
 
-## Bounding funcitons for 𝒻:
-λ = [0.25,0.25,0.25,0.25]
-f_opts = f₁ₘₐₓ, f₂ₘᵢₙ, tilde_f₃ₘₐₓ, tilde_f₄ₘᵢₙ
-tilde_𝒻 = objective_functions.get_𝒻(λ, f_opts, R)
-
-a = [1,1,1,1,1,1]/6
-b = [0,0,0,0,0,0]
-tilde_𝒻(a)
-
-ϕ = f₁ₘₐₓ,f₂ₘᵢₙ,tilde_f₃ₘₐₓ,tilde_f₄ₘᵢₙ
-f₁  = Data_moments.get_f₁(R); f₂  = Data_moments.get_f₂(R); f₃  = Data_moments.get_f₃(R); f₄  = Data_moments.get_f₄(R) 
-function 𝒻(x)
-    if f₃(x) ≤ ϕ[3] && f₄(x) ≥ ϕ[4] 
-        return (1 - (f₁(x)/ϕ[1]))^λ[1] + ((f₂(x)/ϕ[2]) - 1)^λ[2] + (1 - (f₃(x)/ϕ[3]))^λ[3] + ((f₄(x)/ϕ[4]) - 1)^λ[4] 
-    else 
-        return 0
-    end
-end
-
-### Lower bounding function
-hat_ϕ = f₁ₘₐₓ,f₂ₘᵢₙ,tilde_f₃ₘₐₓ,tilde_f₄ₘᵢₙ
-hat_𝒻 = Data_moments.get_𝒻(λ,hat_ϕ,R)
-
-
-𝒻(a)

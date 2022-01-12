@@ -1,5 +1,6 @@
 module data_moments
 using Test
+using Statistics
 
 export get_means_vector,
        get_covariance_matrix,
@@ -7,18 +8,57 @@ export get_means_vector,
        get_kurtosis_matrix,
        run_tests
 
+get_means_vector(R) = Statistics.mean(R, dims=1)
+get_covariance_matrix(R) = Statistics.cov(R, dims=1)
 
-get_means_vector(R) = sum(R, dims=1)/(m(R)-1)
-get_covariance_matrix(R) = [ sum(R[:,i].*R[:,j])  for i ∈ 1:n(R), j ∈ 1:n(R)] ./ (m(R)-1)^2
-get_skewness_matrix(R)   = [ sum(R[:,i].*R[:,jk[1]].*R[:,jk[2]]) for i ∈ 1:n(R), jk ∈  [get_ij_pairs(R)...]  ]./ (m(R)-1)^3
-get_kurtosis_matrix(R)   = [ sum(R[:,ij[1]].*R[:,ij[2]].*R[:,kl[1]].*R[:,kl[2]]) for ij ∈ [get_ij_pairs(R)...], kl ∈  [get_ij_pairs(R)...]  ] ./ (m(R)-1)^4
+function get_standard_deviation(R) 
+    cov_mat =  get_covariance_matrix(R)
+    return [sqrt(cov_mat[i,i]) for i ∈ 1:size(cov_mat)[1]]
+end
+
+function centralize_data!(R) 
+    R[:] = R - repeat(get_means_vector(R), outer=(size(R)[1],1)) # centalize data
+    R
+end
+
+function get_skewness_matrix(R)
+    m, n =size(R)
+    centralize_data!(R)
+    σ = get_standard_deviation(R)
+    IJ = [get_ij_pairs(R)...]
+    return[ sum(R[:,i].*R[:,jk[1]].*R[:,jk[2]]) / (m*σ[i]*σ[jk[1]]*σ[jk[2]] )  for i ∈ 1:n, jk ∈ IJ ]
+end
+
+function get_kurtosis_matrix(R) 
+    m, _ =size(R)
+    centralize_data!(R)
+    σ = get_standard_deviation(R)
+    IJ = [get_ij_pairs(R)...]
+    return [ sum(R[:,ij[1]].*R[:,ij[2]].*R[:,kl[1]].*R[:,kl[2]]) / (m*σ[ij[1]]*σ[ij[2]]*σ[kl[1]]*σ[kl[2]]) for ij ∈ IJ, kl ∈ IJ ]
+
+end
 
 ## utility
-m(R) = size(R)[1] ; n(R) = size(R)[2] # R ∈ ℝᵐˣⁿ
-get_ij_pairs(R) = [ (j,i)  for i ∈ 1:n(R), j ∈ 1:n(R)] #
+# m(R) = size(R)[1] ; n(R) = size(R)[2] # R ∈ ℝᵐˣⁿ
+function get_ij_pairs(R) 
+    _, n =size(R)
+    return [ (j,i)  for i ∈ 1:n, j ∈ 1:n] #
+end
 
 # Tests
 function run_tests()
+    @testset "centralize data" begin
+        R = ones(10,10)
+        centralize_data!(R)
+        @test R == zeros(10,10)
+
+        R = rand(10,10)
+        R_old = R[:,:]
+        R_means = Statistics.mean(R, dims=1)
+        centralize_data!(R)
+        @test R == R_old - repeat(R_means, outer=(10,1)) 
+    end
+
     @testset "special case" begin
         M = 100
         N = 10

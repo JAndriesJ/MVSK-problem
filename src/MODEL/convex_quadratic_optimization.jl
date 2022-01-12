@@ -1,7 +1,22 @@
 module convex_quadratic_optimization # convex_quadratic_optimization  on the simplex
 using Ipopt, JuMP, Test 
+using DataFrames
 export get_variance_min,
+       get_relaxed_kurtosis,
        run_tests  
+
+
+
+
+
+"""
+Relax                   to:
+    min (x⊗x)ᵀQ(x⊗x)      min yᵀQy
+    s.t. x ∈ Δⁿ             s.t. y ∈ Δⁿ^² (the n²-dimensional simplex)
+"""
+get_relaxed_kurtosis(kurtosis_matrix) = get_variance_min(kurtosis_matrix)
+
+
 
 """
 Solve the Convex Quadratic programming on the simplex:

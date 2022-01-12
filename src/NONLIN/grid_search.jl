@@ -1,5 +1,5 @@
 module grid_search
-using Combinatorics, Test
+using Combinatorics,  DataFrames,Test
 export  Δ,
         min, 
         max
@@ -21,11 +21,50 @@ function Δ_int(n,r)
 end
 Δ(n,r) = Δ_int(n,r)./r
 
-""" min f(x) s.t. x ∈ Δ(n,r) """
-min(f,n,r) = minimum(f.(Δ(n,r)))
+""" min f(x) s.t. x ∈ Δ(n,r) , argmin """
+function min_Δ(f,n,r)
+    Δnr = Δ(n,r)
+    fΔnr = f.(Δnr)
+    min_f = minimum(fΔnr)
+    return Δnr[fΔnr .== min_f][1], min_f
+end
+
 
 """ max f(x) s.t. x ∈ Δ(n,r) """
-max(f,n,r) = maximum(f.(Δ(n,r)))
+function max_Δ(f,n,r)
+    Δnr = Δ(n,r)
+    fΔnr = f.(Δnr)
+    max_f = maximum(fΔnr)
+    return Δnr[fΔnr .== max_f][1], max_f
+end
+
+function batch_min(f,n,r_range)
+    df = ini_df()    
+    for r in r_range
+        println("Now running gridsearch with density: $r")
+        sol_t = @elapsed  obj_arg, obj_val = min_Δ(f,n,r)
+        push!(df,  (r, obj_val, obj_arg, sol_t))
+    end
+    return df
+end
+
+function batch_max(f,n,r_range)
+    df = ini_df()         
+    for r in r_range
+        println("Now running gridsearch with density: $r")
+        sol_t = @elapsed  obj_arg, obj_val = max_Δ(f,n,r)
+        push!(df,  (r, obj_val, obj_arg, round(sol_t)))
+    end
+    return df
+end
+
+function ini_df()
+    return  DataFrame(  grid_density=Int[], 
+                        obj_val=Float64[],
+                        obj_arg=Vector{Float64}[],
+                        time_s=Float64[])  
+end
+
 
 # Tests
 function run_tests()
@@ -46,6 +85,13 @@ function run_tests()
     #         @test min(f,n,r) ==  min(f.(Δnr))
     #     end
     # end
+
+    # val_1, f_val_1 = grid_search.max_Δ(f₁, mod.n_stocks,30)
+    # val_2, f_val_2 = grid_search.min_Δ(f₂, mod.n_stocks,30)
+    # val_3, f_val_3 = grid_search.max_Δ(f₃, mod.n_stocks,30)
+    # val_4, f_val_4 = grid_search.min_Δ(f₄, mod.n_stocks,30)
+    # f₂(val_2) ==  f_val_2
+
 
 end  
 
