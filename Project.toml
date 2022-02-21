@@ -18,6 +18,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 SumOfSquares = "4b9e565b-77fc-50a5-a571-1244f986bda1"
 
 [compat]
+Ipopt = "1"
 julia = "1"
 
 [extras]
