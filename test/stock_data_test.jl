@@ -2,8 +2,9 @@ module stock_data_test
 using Test
 using DataFrames
 using LinearAlgebra
- 
-include(pwd()*"/src/stock_data.jl")            ; using .stock_data   
+
+scr_dir = dirname(pwd())*"/src/"
+include(scr_dir*"stock_data.jl")            ; using .stock_data   
 
 function run_tests()
     @testset "read_stock_csv" begin

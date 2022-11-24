@@ -1,9 +1,10 @@
 module obj_test
 using Test    
 
-include(pwd()*"/src/stock_data.jl")     ; using .stock_data
-include(pwd()*"/src/spaces.jl")         ; using .spaces
-include(pwd()*"/src/obj.jl")            ; using .obj
+scr_dir = dirname(pwd())*"/src/"
+include(scr_dir*"stock_data.jl")     ; using .stock_data
+include(scr_dir*"spaces.jl")         ; using .spaces
+include(scr_dir*"src/obj.jl")        ; using .obj
 
 pd = stock_data.read_proc_data()
 

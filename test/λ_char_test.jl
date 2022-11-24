@@ -2,11 +2,11 @@ module λ_char_test
 using Test
 using Random
  
-include(pwd()*"/src/spaces.jl")         ; using .spaces
-include(pwd()*"/src/λ_char.jl")         ; using .λ_char
+scr_dir = dirname(pwd())*"/src/"
+include(scr_dir*"spaces.jl")         ; using .spaces
+include(scr_dir*"λ_char.jl")         ; using .λ_char
 
 Random.seed!(1234)
-
 function run_tests()
     @testset "λ₃_bounds" begin
         r = 1.5

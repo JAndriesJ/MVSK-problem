@@ -2,7 +2,9 @@ module spaces_test
 using Test
 using Random
 
-include(pwd()*"/src/spaces.jl") ; using .spaces
+scr_dir = dirname(pwd())*"/src/"
+include(scr_dir*"spaces.jl") ; using .spaces
+
 Random.seed!(1234)
 function run_tests()
     @testset "simplex" begin

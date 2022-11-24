@@ -1,9 +1,10 @@
 module pareto_set_test
 using Test    
 
-include(pwd()*"/src/stock_data.jl")     ; using .stock_data
-include(pwd()*"/src/spaces.jl")         ; using .spaces
-include(pwd()*"/src/pareto_set.jl")     ; using .pareto_set
+scr_dir = dirname(pwd())*"/src/"
+include(scr_dir*"stock_data.jl")     ; using .stock_data
+include(scr_dir*"spaces.jl")         ; using .spaces
+include(scr_dir*"pareto_set.jl")     ; using .pareto_set
 
 
 pd  = stock_data.read_proc_data()
