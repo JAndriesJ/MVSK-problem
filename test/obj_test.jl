@@ -6,7 +6,6 @@ include(pwd()*"/src/spaces.jl")         ; using .spaces
 include(pwd()*"/src/obj.jl")            ; using .obj
 
 pd = stock_data.read_proc_data()
-λ  = spaces.gen_simp_ele()
 
 function run_tests()
     @testset "Functions" begin

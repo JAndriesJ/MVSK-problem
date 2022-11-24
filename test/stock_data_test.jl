@@ -36,8 +36,8 @@ function run_tests()
 
     @testset "variance" begin
         V = stock_data.calc_V(R,m)
-        isapprox(std, sqrt.(diag(V)) ,atol=1e-3)
-        @test isapprox(V, (1/m)*sum([R[i,:]*R[i,:]' for i ∈ 1:m]) ,atol=1e-14)
+        isapprox(std, sqrt.(diag(V)) ,atol=1e-1)
+        @test isapprox(V, (1/(m-1))*sum([R[i,:]*R[i,:]' for i ∈ 1:m]) ,atol=1e-14)
         @test LinearAlgebra.issymmetric(V) 
         @test minimum(eigvals(V)) ≥ -1e-12
     end
