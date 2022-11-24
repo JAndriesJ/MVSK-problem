@@ -7,7 +7,7 @@ using Serialization
 
 export  read_stock_csv,
         read_proc_data,
-        write_sproc_data,
+        write_proc_data,
         get_proc_data
 
 global data_dir = pwd()*"\\assets\\"
@@ -41,7 +41,7 @@ function proc_data(R::Matrix{Float64})
     std = get_standard_deviation(R) 
     m,n = size(R)
 
-    R     = calc_cent_std_prices(R,M,std,m,n)  
+    R     = calc_cent_std_prices(R,M,std)  
     V     = calc_V(R,m)
     S_mat = calc_S_mat(R,m)
     S     = calc_S(R,m,n)
@@ -73,8 +73,9 @@ end
 get_means_vector(R) = vec(Statistics.mean(R, dims=1))
 get_covariance_matrix(R) = Statistics.cov(R, dims=1)
 get_standard_deviation(R)  = sqrt.(diag(get_covariance_matrix(R)))
-calc_cent_std_prices(R,M,std,m,n) =  R - repeat(reshape(M,1,n),m) ./ repeat(std',m)
-calc_V(R,m) = (1/m)*sum([R[i,:]*R[i,:]' for i ∈ 1:m])
+calc_cent_std_prices(R,M,std) =  (R - repeat(reshape(M,1,size(R)[2]),size(R)[1])) ./ repeat(std',size(R)[1])
+
+calc_V(R,m) = (1/(m-1))*sum([R[i,:]*R[i,:]' for i ∈ 1:m])
 calc_S_mat(R,m) = (1/m)*sum([la.kron(R[i,:],R[i,:])*R[i,:]' for i ∈ 1:m])
 calc_S(R,m,n) = reshape([sum([R[x,i]*R[x,j]*R[x,k] for x ∈ 1:m])/m for i in 1:n for j in 1:n for k in 1:n],n,n,n)
 calc_K_mat(R,m) = (1/m)*sum([la.kron(R[i,:],R[i,:])*la.kron(R[i,:],R[i,:])' for i ∈ 1:m])
@@ -91,6 +92,6 @@ function read_stock_csv(csv_path = data_dir*"stock_prices.csv")
 end
 
 read_proc_data(proc_data_path = data_dir*"proc_data") =  deserialize(proc_data_path)
-write_sproc_data(pd::proc_data; proc_data_path = data_dir*"proc_data") =  serialize( proc_data_path, pd)
+write_proc_data(pd::proc_data; proc_data_path = data_dir*"proc_data") =  serialize( proc_data_path, pd)
 
 end

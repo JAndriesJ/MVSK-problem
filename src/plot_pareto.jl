@@ -5,25 +5,56 @@ using Colors, Plots
 
 include("λ_char.jl")                ; using .λ_char 
 
-export plot_Λ
+export plot_Λ,
+       plot_moments_vs_λ
 
 function plot_Λ(hps, f; sel=[1], top_frac =1)
     f = scale_to_1_optimals(f)
-    plot_vals = calc_plot_vals(hps, sel, f)
-    fmax = maximum(plot_vals)
 
-    Sur = calc_surface(hps.tics)
-    isomin = fmax - fmax*top_frac
-
-    Vol = calc_volume(hps, plot_vals, isomin)
+    Vol = calc_volume(hps, f, sel, top_frac=top_frac)
+    # Sur = calc_surface(hps.tics)
     L = def_Layout(sel)
 
-    P = PlotlyJS.plot([Sur,Vol], L)  
+    P = PlotlyJS.plot(Vol, L)  
+    # P = PlotlyJS.plot([Sur, Vol], L)  
     return P
-    
 end   
 
+function plot_moments_vs_λ(hps, f)
+    moment_names = ["Mean" "Variance"; "Skewness" "Kurtosis"]
+    # L = def_Layout([1])
+    fig = make_subplots(
+        rows=2, cols=2,
+        specs=fill(Spec(kind="scene"), 2,2),
+        subplot_titles=moment_names,
+        vertical_spacing=0.01,
+        horizontal_spacing=0.01
+    )
+   
+    for rc in CartesianIndices((2, 2))
+        row, col = rc.I
+        println([row+col])
+        Vol = calc_volume(hps, f, [row+col])
+        add_trace!(fig,Vol,row=row, col=col)
+    end
 
+    return fig
+end  
+
+function calc_volume(hps, f, sel; top_frac =1)
+    plot_vals = calc_plot_vals(hps, sel, f)
+    isomin = maximum(plot_vals) - maximum(plot_vals)*top_frac
+    return  PlotlyJS.volume(x=hps.λ2[:],
+                            y=hps.λ4[:],
+                            z=hps.λ3[:],
+                            value=plot_vals[:],
+                            isomin=isomin, #,
+                            # isomax=1.0,
+                            opacity=0.2, # needs to be small to see through all surfaces
+                            surface_count=20, # needs to be a large number for good volume rendering
+                            colorscale = "Jet",
+                            )
+end
 
 function calc_plot_vals(hps, sel, f)
     gd = hps.tics
@@ -42,19 +73,6 @@ function calc_surface(gd)
     const_color = Plots.cgrad( [ RGB{Float64}(0.5,1,0.5) for _ in 1:2 ] )
     return PlotlyJS.surface(;z=z_data, x=data, y=data, color=const_color, opacity=0.4)
 end 
-
-function calc_volume(hps, plot_vals, isomin)
-    return  PlotlyJS.volume(x=hps.λ2[:],
-                            y=hps.λ4[:],
-                            z=hps.λ3[:],
-                            value=plot_vals[:],
-                            isomin=isomin, #,
-                            # isomax=1.0,
-                            opacity=0.2, # needs to be small to see through all surfaces
-                            surface_count=20, # needs to be a large number for good volume rendering
-                            colorscale = "Jet",
-                            )
-end
 
 function def_Layout(sel)
     return PlotlyJS.Layout(;
@@ -84,7 +102,5 @@ scale_to_1_optimals(f) = [scale_to_1_optimals(f[1], false),
 
 
 plot_supp_hist(df) =  PlotlyJS.plot(df, x=:supp_w, kind="histogram")
-
-
 
 end

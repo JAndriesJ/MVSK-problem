@@ -1,59 +1,44 @@
 module obj_test
 using Test    
-using Random
 
-include(pwd()*"/src/obj.jl")            ; using .obj
+include(pwd()*"/src/stock_data.jl")     ; using .stock_data
 include(pwd()*"/src/spaces.jl")         ; using .spaces
+include(pwd()*"/src/obj.jl")            ; using .obj
 
-Random.seed!(1234)
-
-n = 10
-R = reshape([1:n^2...],n,n)
-M = [1:n...]
-
-λ = spaces.gen_simp_ele()
+pd = stock_data.read_proc_data()
+λ  = spaces.gen_simp_ele()
 
 function run_tests()
     @testset "Functions" begin
-        F    = obj.calc_F(R,M)
-        F_λ  = obj.calc_F_λ(λ,R,M)
-
-        w = ones(n)
-        @test [F[1](w), F[2](w), F[3](w), F[4](w)]  == [55, 255850.0,  1.300375e8, 6.6301333e10] 
-        @test F_λ(w) == [-F[1](w), F[2](w), -F[3](w), F[4](w)]'*λ
-
+        F    = obj.calc_F(pd.R, pd.M)
+        w = ones(length(pd.M))
+        @test F[1](w) == 0.011294371083715577
+        @test F[2](w) == 0.6703428306477668  
+        @test F[3](w) == -0.5903949337088907
+        @test F[4](w) == 0.5468435597841993
     end    
 
     @testset "Optimizers" begin
+        λ = [0.2878  0.302  0.2831  0.1271]
+        # simplex 
+        F_λ_opt =  obj.get_F_λ_opt(pd.M, pd.V, pd.S, pd.K, λ, box_size=0, sub=0);
+        @test F_λ_opt.domain == "simplex"
+        @test all(F_λ_opt.optimizer[1:2] .≈ [1.3754765623294924e-5, 1.1595362317398075e-5])
+        @test F_λ_opt.opt_val ≈ -0.00023835052763281075
+        @test F_λ_opt.opt_stat == "LOCALLY_SOLVED"
+        @test isapprox(F_λ_opt.sol_time, 1.1430001258850098, atol =1)
+        @test F_λ_opt.λ == λ 
+        # unit box
+        F_λ_opt =  obj.get_F_λ_opt(pd.M, pd.V, pd.S, pd.K, λ, box_size=1, sub=0);
+        @test F_λ_opt.domain == "box"
+        @test all(F_λ_opt.optimizer[1:3]' .≈ [ -0.9993097208151496 -0.7954362484571216 -0.1983273758207766])
+        @test F_λ_opt.opt_val ≈ -0.0008935698828165571
+        @test F_λ_opt.opt_stat == "LOCALLY_SOLVED"
+        @test isapprox(F_λ_opt.sol_time, 1.1430001258850098, atol =1)
+        @test F_λ_opt.λ == λ  
+        # unit sparse   
 
     end
 end
 
 end
-
-
-## Tests
-# w = rand(20)
-# f₁(w), f₂(w) ,f₃(w) ,f₄(w)
-# ∇f₁(), ∇f₂(w), ∇f₃(w), ∇f₄(w)
-# F(λ,w)
-# ∇F(w) = ∇F(λ,w)
-
-# F_mult(w) = [f₁(w), f₂(w), f₃(w), f₄(w)]
-
-# function get_F_λ_optimizers(λ_set, pd; simp_check=false, Π=Π, β=β, iter=iter)
-#     if simp_check
-#         return map(λ -> get_F_λ_optimizer(λ, pd.R, pd.M, Π=Π, β=β, iter=iter), λ_set)
-#     else
-#         return map( λ -> spaces.is_simp(λ) ? get_F_λ_optimizer(λ, R, M,  Π=Π, β=β, iter=iter) : NaN, λ_set)
-#     end
-# end
-
-# w_star = obj.get_F_λ_optimizer(λ, R, M, Π, β, iter)
-        # @test w_star == [1.0, zeros(9)...]
-
-        # λ_set = [spaces.Euc_proj_simp(rand(4)) for i in 1:10]
-        # w_star_set = obj.get_F_λ_optimizers(λ_set, R, M, false, Π, β, iter)
-        # @test w_star_set == [9.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1.0]
-
-        # # obj.get_F_optimals(w_star_set, R, M, tru

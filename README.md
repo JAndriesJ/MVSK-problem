@@ -1,26 +1,8 @@
 # Mean-Variance-Skewness-Kurtosis (MVSK) optimization 
 ![[MVSK.png]]
 
-## Introduction 
-MVSK.jl is used to compute feasible solution and bounds to the MVSK-problem.
-This is done by using techniques from polynomial optimization and non-linear optimization.
+## Introduction (Math and theory)
 
-**The MVSK-problem:**
-$$
-\begin{equation}  \tag{0}
-\begin{split} 
-
-\max & ~~ f_1(w) := w^T\Phi^{(1)} \\
-\min & ~~ f_2(w) := w^T\Phi^{(2)}w \\
-\max & ~~ f_3(w) := w^T\Phi^{(3)}(w\otimes w) \\
-\min & ~~ f_4(w) := w^T\Phi^{(4)}(w\otimes w \otimes w) \\
-s.t. &~~  w \in \Delta^N \\
- \end{split}
- \end{equation}
-$$
-where $\Delta^N$ is the standard simplex of size $N$ and $\Phi^{(1)},\Phi^{(2)},\Phi^{(3)},\Phi^{(4)}$ are data matrices of appropriate dimensions.
-
-For details of the mathematics see [arXiv paper](url)
 
 ---
 ## How to install
@@ -30,92 +12,46 @@ For details of the mathematics see [arXiv paper](url)
 - Test installation
 
 ---
-## How to use
-#### Example 1: using the preloaded data
-```
-
-```
-
-
-#### Example 2:
-#### Example 3:
-
----
-## Overview of modules:
-
-$$
-\underbrace{\wh{\scr f}_{\SAGE}}_{\text{SAGE bound}} ~~~~\leq~~~~ \underbrace{\wh{\scr f}_{\min}(\omega)}_{\text{NONLIN bound}}
-~~~~\leq~~~~ \underbrace{{\scr f}_{\min}(\omega)}_{\text{model}}
-~~~~\leq~~~~ \underbrace{\wtl{\scr f}_{\min}(\omega)}_{\text{POP bound}}
-~~~~\leq~~~~ \underbrace{\wtl{\scr f}(\omega^{(r)})}_{\text{NONLIN bound}}
-$$
-
-
-``` mermaid
-flowchart TB  
- subgraph MODEL
-	 DATA
-	 UTIL
- end
-
- subgraph POP
-	 1
- end
-
- subgraph NONLIN	
-	 2
- end
- 
- subgraph SAGE
-	 3
- end
-```
-
-
----
-## To Do list
-
-
-
-
-
-
-
-
 
 ## Getting started
 ```Julia
-## Running a single model:
-Number_of_stocks = 10
-Level_of_Hierarchy = 2 # must be higher than 1
-k = 3 # 3 for skewnes, 4 for kurtosis
-mod     = SDPmodel.get_SDP_model(Number_of_stocks,Level_of_Hierarchy,3)
-mod_opt = SDPoptimized.optimize_SDP(mod)
+include("MVSK.jl")            ; using .MVSK     
+
+#-------------------------------------------- Data -------------------------------------------- 
+pd = MVSK.get_processed_stock_data()
+#--------------------------------------------single calc-------------------------------------------- 
+λ = [0.2878  0.302  0.2831  0.1271]
+
+simp_F_λ_opt = MVSK.get_F_λ_optimal_(pd.M,pd.V,pd.S,pd.K,λ)
+simp_F_λ_opt.domain
+simp_F_λ_opt.optimizer 
+simp_F_λ_opt.opt_val
+simp_F_λ_opt.opt_stat
+simp_F_λ_opt.sol_time
+simp_F_λ_opt.λ
+
+box_F_λ_opt = MVSK.get_F_λ_optimal_(pd.M,pd.V,pd.S,pd.K,λ,1)
+box_F_λ_opt.domain
+box_F_λ_opt.optimizer 
+box_F_λ_opt.opt_val
+box_F_λ_opt.opt_stat
+box_F_λ_opt.sol_time
+box_F_λ_opt.λ
+
+# Sparse one ??
 
 
-Primal_status    = string(primal_status(mod_opt)) 
-Dual_status      = string(dual_status(mod_opt))
-objective_value  = JuMP.objective_value(mod_opt)
-computation_time = JuMP.solve_time(mod_opt)
+#-------------------------------------------- -------------------------------------------- 
+# MVSK.get_F_Λ_Pareto(save_path="default.csv",mesh_fineness=10,box_size=0,sub=0)
+load_path = "C:\\Users\\jandr\\code_projects\\MVSK\\assets\\"* ["pareto_071122_40_simp_sparse_5.csv",
+                                                                "pareto_261022_40_simp.csv",
+                                                                "pareto_271022_40_box.csv"][2]
+MVSK.plot_Pareto(load_path, sel=[4])
 ```
 
-```Julia
-## Running the model for a batch of parameters:
-## Skewness
-Number_of_stocks_list = [5:15 ...]
-Level_of_Hierarchy_list = [2:3 ...] # must be higher than 1
-k = 3 # 3 for skewnes, 4 for kurtosis
-SDPoptimized.batch_optimize_SDP(Number_of_stocks_list,Level_of_Hierarchy_list,k)
-## Kurtosis
-Number_of_stocks_list = [5:15 ...]
-Level_of_Hierarchy_list = [2:3 ...] # must be higher than 1
-k = 4 # 3 for skewnes, 4 for kurtosis
-SDPoptimized.batch_optimize_SDP(Number_of_stocks_list,Level_of_Hierarchy_list,k)
-```
 
 
-
-### How to get your own data.
+### How to use your own data.
 All you need to do is replace the "...\MVSK\assets\stock_prices.csv" with another CSV that is ove the form
 
 |date|Stock1|Stock2|Stock3|Stock4|...|
@@ -127,7 +63,7 @@ $\vdots$
 
 
 
-## Technologies used (libraries & versions, helps recruiters)
+## Technologies used (libraries & versions)
 
 
 ### Acknowledgments

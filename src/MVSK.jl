@@ -7,58 +7,39 @@ include("obj.jl")                   ; using .obj
 include("pareto_set.jl")            ; using .pareto_set
 include("plot_pareto.jl")           ; using .plot_pareto
 
-# include(pwd()*"/test/runtests.jl")  
-#----------------------------------------------------------------------------------------Data 
-pd  = stock_data.get_proc_data()
-hps =  spaces.get_λ_spaces(10, pd.R_max_max)
-save_path = "C:\\Users\\jandr\\code_projects\\MVSK\\assets\\pareto_1.csv"
-pareto_set.populate_results_csv(pd.R, pd.M, pd.V, pd.S, pd.K, hps.simp_λ_set, hps.simp_conv_mask; save_path = save_path)
 
-df_pareto = pareto_set.read_results_csv(save_path)
-f = [df_pareto.f1, df_pareto.f2, df_pareto.f3, df_pareto.f4]
+# function test_MVSK()
+#     include(pwd()*"/test/runtests.jl") 
+# end
 
+function get_processed_stock_data()
+    return stock_data.read_proc_data()
+end
 
+function get_hyperparameter_spaces(mesh_fineness)
+    return spaces.get_λ_spaces(mesh_fineness, pd.R_max_max)
+end
 
+function get_F_λ_optimal_(M,V,S,K,λ,box_size=0)
+    return obj.get_F_λ_opt(M,V,S,K,λ; box_size=box_size, sub=0)
+end
 
-f[1][calc_close_to_best(f[1])]
-f[2][calc_close_to_best(f[2], flip = true)]
-f[3][calc_close_to_best(f[3])]
-f[4][calc_close_to_best(f[4], flip = true)]
+function get_F_Λ_Pareto(save_path="default.csv",mesh_fineness=10,box_size=0,sub=0)
+    pd = get_processed_stock_data()
+    hps =  spaces.get_λ_spaces(mesh_fineness, pd.R_max_max)
+    pareto_set.populate_results_csv(pd.R, pd.M, pd.V, pd.S, pd.K, hps.simp_λ_set, hps.simp_conv_mask; save_path=save_path, box_size=box_size, sub=sub)
+    return pwd()*"\\"*save_path
+end
 
-nara = scale_to_1_optimals(f[1])+ scale_to_1_optimals(f[2],true)+ scale_to_1_optimals(f[3]) + scale_to_1_optimals(f[4],true)
-best_mast = nara .>  maximum(nara)-0.001*maximum(nara)
+function plot_Pareto(load_path::String; sel=[1], top_frac=1)
+    b         = 0.4433406024717046
+    df_pareto = pareto_set.read_results_csv(load_path)
+    F         = [df_pareto.F1, df_pareto.F2, df_pareto.F3, df_pareto.F4]
+    hps       =  spaces.get_λ_spaces(40, b)
+    P         = plot_pareto.plot_Λ(hps, F; sel=sel, top_frac=top_frac)
+    return P
+end
 
-best_F_mat = hcat(f[1],f[2],f[3],f[4])[best_mast,:]
-
-
-
-
-function scale_to_1_optimals(arr, flip = false)
-    mm = minimum(filter(!isnan, arr))
-    mx = maximum(filter(!isnan, arr))
-    scal = (arr .- mm)/(mx - mm)
-    return flip ? 1 .+ (-1)*scal : scal
 end
 
 
-
-using PlotlyJS
-P = plot_pareto.plot_Λ(hps, f; sel=[1,2,3])
-PlotlyJS.savefig(P, "test.png")
-
-
-
-# https://plotly.com/julia/figure-labels/
-# https://plotly.com/julia/3d-surface-plots/
-end
-
-
-# sort(f[1])[end-4:end]'
-# sort(f[2])[1:5]'
-# sort(f[3])[end-4:end]'
-# sort(f[4])[1:5]'
-
-function calc_close_to_best(arr; closenes = 0.1, flip = false)
-    s_arr = scale_to_1_optimals(arr, flip)
-    return s_arr .>  1-closenes
-end

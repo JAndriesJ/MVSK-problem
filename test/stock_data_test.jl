@@ -2,64 +2,64 @@ module stock_data_test
 using Test
 using DataFrames
 using LinearAlgebra
-
+ 
 include(pwd()*"/src/stock_data.jl")            ; using .stock_data   
-# fieldnames(typeof(pd)) == (:R, :M, :std, :V, :S, :S_mat, :K, :K_mat, :R_max, :R_min, :R_max_max, :R_min_min, :n, :m)
-# df = stock_data.read_stock_csv()
+
 function run_tests()
     @testset "read_stock_csv" begin
-        df_raw = stock_data.read_stock_csv()
+        global df_raw = stock_data.read_stock_csv()
         @test typeof(df_raw) == DataFrame
         @test size(df_raw) == (501,20)
     end
 
     @testset "calc_relative_returns" begin
-        R = stock_data.calc_relative_returns(df_raw)
+        global R = stock_data.calc_relative_returns(df_raw)
         @test size(R) == (500,20)
         @test R[1] == 0.010026330698287287
     end
 
     @testset "mean and std" begin
-        M   = get_means_vector(R) 
+        global M = stock_data.get_means_vector(R) 
         length(M) == 20
-        std = get_standard_deviation(R) 
+        global std = stock_data.get_standard_deviation(R) 
         @test all(std .≥ 0)
     end
 
-    @testset "sizeand ent_std_prices" begin
-        m,n = size(R)
-        @test m == 500
-        @test n == 20
-
-        R     = calc_cent_std_prices(R,M,std,m,n) 
-        @test size(R) ==  (500,20)
+    @testset "cent_std_prices" begin
+        global m = 500
+        global n = 20
+        Rcs = stock_data.calc_cent_std_prices(R,M,std) 
+        @test isapprox(stock_data.get_means_vector(Rcs), zeros(n), atol=1e-14)
+        @test isapprox(stock_data.get_standard_deviation(Rcs), ones(n), atol=1e-14)
+        @test size(Rcs) ==  (500,20)
     end
 
     @testset "variance" begin
-        V     = calc_V(R,m)
-        @test isapprox(V, (1/m)*sum([R[i,:]*R[i,:]' for i ∈ 1:m]) ,atol=1e-8)
-        @test issymmetric(V) 
+        V = stock_data.calc_V(R,m)
+        isapprox(std, sqrt.(diag(V)) ,atol=1e-3)
+        @test isapprox(V, (1/m)*sum([R[i,:]*R[i,:]' for i ∈ 1:m]) ,atol=1e-14)
+        @test LinearAlgebra.issymmetric(V) 
         @test minimum(eigvals(V)) ≥ -1e-12
     end
 
     @testset "skewness" begin    
-        S_mat = calc_S_mat(R,m)
-        S     = calc_S(R,m,n)
-        @test S_mat[1] == S[1]
+        S_mat = stock_data.calc_S_mat(R,m)
+        S     = stock_data.calc_S(R,m,n)
+        @test S_mat[1] ≈ S[1]
         @test size(S_mat) == (n^2, n)
         @test size(S) == (n, n, n)
     end
 
     @testset "kurtosis" begin
-        K_mat = calc_K_mat(R,m) 
-        K     = calc_K(R,m,n)
-        @test K_mat[1] == K[1]
-        @test issymmetric(K_mat)
+        K_mat = stock_data.calc_K_mat(R,m) 
+        K     = stock_data.calc_K(R,m,n)
+        @test K_mat[1] ≈ K[1]
+        @test LinearAlgebra.issymmetric(K_mat)
         @test minimum(eigvals(K_mat)) ≥ -1e-12
     end
 
     @testset "maxima" begin    
-        R_max = maximum(R,dims=2) # [maximum(R[t,:]) for t ∈ 1:m]   
+        R_max = maximum(R,dims=2)   
         R_min = minimum(R,dims=2) 
         R_max_max = maximum(R_max)
         R_min_min = minimum(R_min)
@@ -69,8 +69,10 @@ function run_tests()
         @test R_min_min == minimum(R_min)
     end 
 
-    # read_proc_data(proc_data_path = data_dir*"proc_data") =  deserialize(proc_data_path)
-    # write_sproc_data(pd::proc_data; proc_data_path = data_dir*"proc_data") =  serialize( proc_data_path, pd)
+    @testset "proc_data" begin
+        pd = stock_data.proc_data(R)
+        @test fieldnames(typeof(pd)) == (:R, :M, :std, :V, :S, :S_mat, :K, :K_mat, :R_max, :R_min, :R_max_max, :R_min_min, :n, :m)
+    end
 
 end
 
