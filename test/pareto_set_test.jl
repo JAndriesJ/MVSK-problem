@@ -6,10 +6,8 @@ include(scr_dir*"stock_data.jl")     ; using .stock_data
 include(scr_dir*"spaces.jl")         ; using .spaces
 include(scr_dir*"pareto_set.jl")     ; using .pareto_set
 
-
-pd  = stock_data.read_proc_data()
+pd  = stock_data.read_proc_data(dirname(pwd())*"\\assets\\proc_data")
 hps = spaces.get_λ_spaces(3, pd.R_max_max)
-
 function run_tests()
     @testset "populate_results_csv" begin
         pareto_set.populate_results_csv(pd.R, pd.M, pd.V, pd.S, pd.K, hps.simp_λ_set, hps.simp_conv_mask; save_path="test_save.csv", box_size=0, sub=0)

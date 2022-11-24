@@ -1,16 +1,13 @@
 module MVSK
 
-include("stock_data.jl")            ; using .stock_data          
-include("λ_char.jl")                ; using .λ_char   
-include("spaces.jl")                ; using .spaces
-include("obj.jl")                   ; using .obj
-include("pareto_set.jl")            ; using .pareto_set
-include("plot_pareto.jl")           ; using .plot_pareto
+src_p = ""
+include(src_p*"stock_data.jl")            ; using .stock_data          
+include(src_p*"λ_char.jl")                ; using .λ_char   
+include(src_p*"spaces.jl")                ; using .spaces
+include(src_p*"obj.jl")                   ; using .obj
+include(src_p*"pareto_set.jl")            ; using .pareto_set
+include(src_p*"plot_pareto.jl")           ; using .plot_pareto
 
-
-# function test_MVSK()
-    # include(pwd()*"/test/runtests.jl") 
-# end
 
 function get_processed_stock_data()
     return stock_data.read_proc_data()

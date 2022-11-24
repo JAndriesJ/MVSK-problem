@@ -3,12 +3,12 @@ using Test
 using DataFrames
 using LinearAlgebra
 
-scr_dir = dirname(pwd())*"/src/"
-include(scr_dir*"stock_data.jl")            ; using .stock_data   
+main_dir = dirname(pwd())
+include(main_dir*"/src/"*"stock_data.jl")            ; using .stock_data   
 
 function run_tests()
     @testset "read_stock_csv" begin
-        global df_raw = stock_data.read_stock_csv()
+        global df_raw = stock_data.read_stock_csv(main_dir*"\\assets\\stock_prices.csv")
         @test typeof(df_raw) == DataFrame
         @test size(df_raw) == (501,20)
     end
@@ -38,7 +38,7 @@ function run_tests()
     @testset "variance" begin
         V = stock_data.calc_V(R,m)
         isapprox(std, sqrt.(diag(V)) ,atol=1e-1)
-        @test isapprox(V, (1/(m-1))*sum([R[i,:]*R[i,:]' for i ∈ 1:m]) ,atol=1e-14)
+        @test isapprox(V, (1/(m))*sum([R[i,:]*R[i,:]' for i ∈ 1:m]) ,atol=1e-14)
         @test LinearAlgebra.issymmetric(V) 
         @test minimum(eigvals(V)) ≥ -1e-12
     end
@@ -71,7 +71,7 @@ function run_tests()
     end 
 
     @testset "proc_data" begin
-        pd = stock_data.proc_data(R)
+        pd = stock_data.process_data(R)
         @test fieldnames(typeof(pd)) == (:R, :M, :std, :V, :S, :S_mat, :K, :K_mat, :R_max, :R_min, :R_max_max, :R_min_min, :n, :m)
     end
 
