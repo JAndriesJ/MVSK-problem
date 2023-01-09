@@ -48,8 +48,8 @@ function calc_results_line(F,M,V,S,K,λ; box_size=0, sub=0)
     return w, st, os, Fw
 end
 
-read_results_csv(csv_path) = clean_results_csv(
-                                               CSV.read(csv_path, DataFrame, delim="|")
+read_results_csv(csv_path, delim="|") = clean_results_csv(
+                                               CSV.read(csv_path, DataFrame, delim=delim)
                                                 )
 function clean_results_csv(df)
     df.λ       = txt_to_math.(df.λ) 

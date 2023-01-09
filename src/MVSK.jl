@@ -13,9 +13,10 @@ function get_processed_stock_data()
     return stock_data.read_proc_data()
 end
 
-function get_hyperparameter_spaces(mesh_fineness)
-    return spaces.get_λ_spaces(mesh_fineness, pd.R_max_max)
+function get_hyperparameter_spaces(mesh_fineness, R_Δ_up, R_□_up)
+    return spaces.get_λ_spaces(mesh_fineness, R_Δ_up, R_□_up)
 end
+
 
 function get_F_λ_optimal_(M,V,S,K,λ,box_size=0)
     return obj.get_F_λ_opt(M,V,S,K,λ; box_size=box_size, sub=0)
@@ -23,7 +24,7 @@ end
 
 function get_F_Λ_Pareto(save_path="default.csv",mesh_fineness=10,box_size=0,sub=0)
     pd = get_processed_stock_data()
-    hps =  spaces.get_λ_spaces(mesh_fineness, pd.R_max_max)
+    hps =  spaces.get_λ_spaces(mesh_fineness, pd.R_Δ_up, pd.R_□_up)
     pareto_set.populate_results_csv(pd.R, pd.M, pd.V, pd.S, pd.K, hps.simp_λ_set, hps.simp_conv_mask; save_path=save_path, box_size=box_size, sub=sub)
     return pwd()*"\\"*save_path
 end
@@ -38,5 +39,3 @@ function plot_Pareto(load_path::String; sel=[1], top_frac=1)
 end
 
 end
-
-

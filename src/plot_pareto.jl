@@ -6,7 +6,8 @@ using Colors, Plots
 include("λ_char.jl")                ; using .λ_char 
 
 export plot_Λ,
-       plot_moments_vs_λ
+       plot_moments_vs_λ,
+       scale_to_1_optimals
 
 function plot_Λ(hps, f; sel=[1], top_frac =1)
     f = scale_to_1_optimals(f)
@@ -80,7 +81,7 @@ function def_Layout(sel)
                             xaxis_title = "lambda_2",
                             yaxis_title = "lambda_4",
                             zaxis_title = "lambda_3",
-                            scene_camera_eye=attr(x=-1.4, y=-1.4, z=0.5),
+                            scene_camera_eye=attr(x=1, y=-2.5, z=0.25),
                             font=attr(  family="Courier New, monospace",
                                         size=18,
                                         color="RebeccaPurple"
@@ -101,6 +102,6 @@ scale_to_1_optimals(f) = [scale_to_1_optimals(f[1], false),
                           scale_to_1_optimals(f[4], true)]
 
 
-plot_supp_hist(df) =  PlotlyJS.plot(df, x=:supp_w, kind="histogram")
+# plot_supp_hist(df) =  PlotlyJS.plot(df, x=:supp_w, kind="histogram")
 
 end
