@@ -12,6 +12,10 @@ include(src_p*"plot_pareto.jl")           ; using .plot_pareto
 
 #-------------------------------------------- Data -------------------------------------------- 
 pd = MVSK.get_processed_stock_data()
+λ = spaces.gen_simp_ele(4)
+obj.get_F_λ_opt(pd,λ,x₀=zeros(20),iter=0, box_size=0, sub=0)
+
+
 hps = MVSK.get_hyperparameter_spaces(80, pd.R_Δ_up, pd.R_□_up)
 approximate_volumns = round.(hps.conv_rel_vol, digits=3)
 
@@ -39,22 +43,42 @@ PlotlyJS.plot(Vol)
 nar = [ sum(λ_g) ≤ 1  for λ_g ∈ λ_grid]
 nar1 = [ sum(λ_g) ≤ 1 ? λ_g[2] ≤ sqrt(abs((8/3)*λ_g[1]*(1-λ_g[1]-λ_g[2]))) : 0   for λ_g ∈ λ_grid]
 # nar2 = [ λ_g[2] ≤ sqrt((8/3)(1-λ_g[1]-λ_g[2] )*λ_g[1] )  for λ_g ∈ λ_grid]
-# pd.R_Δ_up, pd.R_□_up
-
-
-using PlotlyJS
-
-data = [1 20 30; 20 1 60; 30 60 1]
-plot(heatmap(z=nar*.1 + nar1*.1 ))
-
 
 
 ## Computations
-# MVSK.get_F_Λ_Pareto("simp19.12.2022.csv",40,0,0)
-# MVSK.get_F_Λ_Pareto("Box19.12.2022.csv",40,1,0)
-pd        = MVSK.get_processed_stock_data()
+pd  = MVSK.get_processed_stock_data()
 hps =  spaces.get_λ_spaces(40, pd.R_Δ_up, pd.R_□_up)
-pareto_set.populate_results_csv(pd.R, pd.M, pd.V, pd.S, pd.K, hps.simp_λ_set[10567:end], hps.simp_conv_mask[10567:end]; save_path="Box19.12.2022.csv", box_size=1, sub=0)
+
+λ_set = hps.simp_λ_set[1:10]
+conv_mask = hps.simp_conv_mask[1:10]
+
+pareto_set.prep_results_csv(pd, λ_set, conv_mask,
+                            "FISTA_simp_40.csv",
+                            iter=2000 ,box_size=0, sub=0)
+
+pareto_set.prep_results_csv(pd, λ_set, conv_mask,
+                            "FISTA_box_40.csv",
+                            iter=2000 ,box_size=1, sub=0)
+
+pareto_set.prep_results_csv(pd, λ_set, conv_mask,
+                            "IPopt_test.csv",
+                            iter=0 ,box_size=0, sub=0)
+####
+
+df_FISTA = pareto_set.read_results_csv("FISTA_test.csv","|")
+df_IPOPT = pareto_set.read_results_csv("IPopt_test.csv","|")
+
+hcat(df_FISTA.Fλ, df_IPOPT.Fλ)
+sum(df_FISTA.Fλ .≥ df_IPOPT.Fλ) 
+hcat(df_FISTA.t, df_IPOPT.t)
+using LinearAlgebra
+norm.(df_FISTA.w - df_IPOPT.w)
+# .≥ df_IPOPT.w
+
+df_FISTA.t'
+df_IPOPT.t'
+
+
 
 
 ## Post proc
@@ -120,21 +144,38 @@ end
 
 #-------------------------------------------- -------------------------------------------- 
 # MVSK.get_F_Λ_Pareto(save_path="default.csv",mesh_fineness=10,box_size=0,sub=0)
-load_path = "C:\\Users\\jandr\\code_projects\\MVSK\\assets\\"* ["pareto_071122_40_simp_sparse_5.csv",
+load_path = "C:\\Users\\jandr\\code_projects\\MVSK.jl\\assets\\"* ["pareto_071122_40_simp_sparse_5.csv",
                                                                 "pareto_261022_40_simp.csv",
-                                                                "pareto_271022_40_box.csv"][2]
-MVSK.plot_Pareto(load_path, sel=[4])
+                                                                "pareto_271022_40_box.csv",
+                                                                "simp19.12.2022.csv",
+                                                                "Box19.12.2022.csv"][4]
 
 
-f₁(w )
-f₂(w )
-f₃(w )
-f₄(w )
+df_pareto = pareto_set.read_results_csv(load_path,"\t")
+
+lambdas_df = df_pareto[:,:λ]
+w_lambdas_df = df_pareto.w
+
+lambdas = lambdas_df[1:1000]
+w_lambdas = w_lambdas_df[1:1000]
+ord = sortperm(lambdas)
+lambdas = lambdas[ord]
+w_lambdas = w_lambdas[ord]
 
 
-a = zeros(10)
-Threads.@threads for i = 1:10
-    a[i] = Threads.threadid()
-end
-a
-Threads.nthreads()
+maximum(norm.(lambdas[1:end-1] - lambdas[2:end]))
+minimum(norm.(lambdas[1:end-1] - lambdas[2:end]))
+
+using LinearAlgebra
+λ_dist_mat = [ norm(l1 - l2, 2) for l1 in lambdas, l2 in lambdas]
+wλ_dist_mat = [ norm(w1 - w2, 2) for w1 in w_lambdas , w2 in w_lambdas ]
+dily = wλ_dist_mat .≤  8*λ_dist_mat
+nara = map(x-> x.I, findall(.~ dily))
+
+
+using PlotlyJS
+plot(heatmap(z=λ_dist_mat))
+plot(heatmap(z=wλ_dist_mat))
+plot(heatmap(z=(dily.+ 0)))
+
+

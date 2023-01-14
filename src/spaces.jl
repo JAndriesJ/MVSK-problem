@@ -8,6 +8,7 @@ export get_λ_spaces,
        is_r_simp,
        gen_simp_ele,
        Euc_proj_simp,
+       Euc_proj_box,
        is_sphere,
        L2_normalize,
        supp
@@ -90,6 +91,7 @@ L2_normalize(x) = x/L2_norm(x)
 is_sphere(x) =L2_norm(x) ≈  1
 #----------------------------------------------------Box-----------------------------------------------------   
 
+Euc_proj_box(x,b=1) = [ xᵢ > 0 ?   minimum([xᵢ, b]) :  maximum([xᵢ, -b]) for xᵢ ∈ x]
 
 
 #-----------------------------------------------------Utility-----------------------------------------------------   

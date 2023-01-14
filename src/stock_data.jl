@@ -42,11 +42,12 @@ function process_data(R::Matrix{Float64})
     
     M_sizeR = repeat(reshape(M,1,n),m)
      
-    V     = calc_V(R - M_sizeR,m)
-    S_mat = calc_S_mat(R - M_sizeR,m)
-    S     = calc_S(R - M_sizeR,m,n)
-    K_mat = calc_K_mat(R - M_sizeR,m) 
-    K     = calc_K(R - M_sizeR,m,n)
+    R_mod = R - M_sizeR
+    V     = calc_V(R_mod,m)
+    S_mat = calc_S_mat(R_mod,m)
+    S     = calc_S(R_mod,m,n)
+    K_mat = calc_K_mat(R_mod,m) 
+    K     = calc_K(R_mod,m,n)
 
     R_Δ_up = maximum(maximum(R,dims=2))
     R_□_up = maximum(sum(abs.(R),dims=2))

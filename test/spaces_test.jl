@@ -60,3 +60,15 @@ function run_tests()
 end
 
 end
+# Euclidean projection to the box
+# xy = (rand(2,5) .-[0.5,0.5])*10
+# x = xy[1,:]
+# y = xy[2,:]
+
+# xy_box =hcat([Euc_proj_box(xy[:,i],1) for i in 1:5 ]...)
+# x_box = xy_box[1,:]
+# y_box = xy_box[2,:]
+
+# using PlotlyJS
+# plot(scatter(x=x, y=y, mode="markers"))
+# plot(scatter(x=x_box, y=y_box, mode="markers"))
